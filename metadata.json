@@ -1,0 +1,6 @@
+{
+  "name": "Axiom Xchange",
+  "description": "Fast, secure and seamless cryptocurrency & digital asset trading platform with instant on-chain verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // DENY ALL BY DEFAULT
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        request.auth.token.email in ['shawnexchange82@gmail.com', 'axiomxchange82@gmail.com', 'neephi8@gmail.com', 'eemmpatech@gmail.com'] ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      ); 
+    }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // User Rules
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Bank Accounts Rules
+    match /users/{userId}/bank_accounts/{accountId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // Rates Rules
+    match /rates/{assetId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // System Config & Dynamic Wallets
+    match /config/{configId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // System Wallets
+    match /wallets/{walletId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Transactions Rules
+    match /transactions/{transactionId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin() || (isOwner(resource.data.userId));
+    }
+
+    // Notifications Rules
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Admin Rules
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin(); 
+    }
+
+    // Admin History & Audit Logs
+    match /admin_history/{historyId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

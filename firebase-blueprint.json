@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with trading metrics",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "username": { "type": "string" },
+        "tier": { "type": "number", "default": 1 },
+        "verified": { "type": "boolean", "default": false },
+        "walletBalance": { "type": "number", "default": 0, "description": "Naira wallet balance" },
+        "totalTradeVolume": { "type": "number", "default": 0 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "username", "tier", "verified"]
+    },
+    "BankAccount": {
+      "title": "Bank Account",
+      "description": "User's bank account for payouts",
+      "type": "object",
+      "properties": {
+        "accountName": { "type": "string" },
+        "accountNumber": { "type": "string" },
+        "bankName": { "type": "string" },
+        "bankCode": { "type": "string" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["accountName", "accountNumber", "bankName"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "A financial transaction record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "type": { "type": "string", "enum": ["sell_crypto", "sell_giftcard", "buy_crypto", "buy_giftcard", "withdrawal", "deposit"] },
+        "status": { "type": "string", "enum": ["pending", "awaiting_payment", "processing", "paid", "failed"] },
+        "assetId": { "type": "string" },
+        "assetName": { "type": "string" },
+        "amount": { "type": "number", "description": "Original amount (e.g. USDT or Gift Card value)" },
+        "rateUsed": { "type": "number" },
+        "nairaAmount": { "type": "number" },
+        "network": { "type": "string" },
+        "proofUrl": { "type": "string" },
+        "payoutAccount": { "$ref": "#/entities/BankAccount" },
+        "paymentReference": { "type": "string" },
+        "adminNotes": { "type": "string" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "status", "nairaAmount"]
+    },
+    "Rate": {
+      "title": "Asset Rate",
+      "type": "object",
+      "properties": {
+        "assetId": { "type": "string" },
+        "assetName": { "type": "string" },
+        "buyRate": { "type": "number" },
+        "sellRate": { "type": "number" },
+        "category": { "type": "string" },
+        "network": { "type": "string" }
+      }
+    },
+    "Config": {
+      "title": "System Configuration",
+      "type": "object",
+      "properties": {
+        "usdRate": { "type": "number" },
+        "eurRate": { "type": "number" },
+        "gbpRate": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AdminHistory": {
+      "title": "Admin History and Audit Ledger",
+      "type": "object",
+      "properties": {
+        "action": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetUser": { "type": "string" },
+        "details": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["action", "adminEmail"]
+    }
+  },
+  "firestore": {
+    "/config/{configId}": {
+      "schema": "Config",
+      "description": "Dynamic system pricing and rates"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile records"
+    },
+    "/users/{userId}/bank_accounts/{accountId}": {
+      "schema": "BankAccount",
+      "description": "User's payout bank accounts"
+    },
+    "/transactions/{id}": {
+      "schema": "Transaction",
+      "description": "System-wide transaction ledger"
+    },
+    "/rates/{id}": {
+      "schema": "Rate",
+      "description": "Exchange rates for assets"
+    },
+    "/admins/{userId}": {
+      "schema": { "type": "object", "properties": { "role": { "type": "string" } } },
+      "description": "Admin access control list"
+    },
+    "/admin_history/{id}": {
+      "schema": "AdminHistory",
+      "description": "Admin action history and audit records"
+    }
+  }
+}
